@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, {useState} from 'react';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import CalculatorPage from './src/screens/CalculatorPage';
 import LoadingScreen from './src/screens/LoadingScreen';
 import NotificationScreen from './src/screens/NotificationScreen';
+import HomeScreen from './src/screens/HomeScreen';
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedPage, setSelectedPage] = useState<'home' | 'calculator' | 'notifications'>('home');
+  const [selectedPage, setSelectedPage] = useState<
+    'home' | 'calculator' | 'notifications'
+  >('home');
 
   if (isLoading) {
     return <LoadingScreen onFinish={() => setIsLoading(false)} />;
@@ -15,26 +18,31 @@ const App = () => {
 
   if (selectedPage === 'home') {
     return (
-      <View style={styles.container}>
-        <Text style={styles.text}>Home page</Text>
-        <Icon name="account-heart" size={80} color="#5AC8FA" />
+      <>
+        <HomeScreen />
         <View style={styles.bottomBar}>
           <View style={styles.buttonRow}>
-            <TouchableOpacity style={styles.bottomButton} onPress={() => setSelectedPage('home')}>
+            <TouchableOpacity
+              style={styles.bottomButton}
+              onPress={() => setSelectedPage('home')}>
               <Icon name="monitor-dashboard" size={28} color="#007AFF" />
               <Text style={styles.buttonLabel}>Monitor</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.bottomButton} onPress={() => setSelectedPage('notifications')}>
+            <TouchableOpacity
+              style={styles.bottomButton}
+              onPress={() => setSelectedPage('notifications')}>
               <Icon name="bell-outline" size={28} color="#888" />
               <Text style={styles.buttonLabel}>Notifications</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.bottomButton} onPress={() => setSelectedPage('calculator')}>
+            <TouchableOpacity
+              style={styles.bottomButton}
+              onPress={() => setSelectedPage('calculator')}>
               <Icon name="calculator-variant-outline" size={28} color="#888" />
               <Text style={styles.buttonLabel}>WQI Calculator</Text>
             </TouchableOpacity>
           </View>
         </View>
-      </View>
+      </>
     );
   } else if (selectedPage === 'calculator') {
     return (
@@ -42,16 +50,26 @@ const App = () => {
         <CalculatorPage />
         <View style={styles.bottomBar}>
           <View style={styles.buttonRow}>
-            <TouchableOpacity style={styles.bottomButton} onPress={() => setSelectedPage('home')}>
+            <TouchableOpacity
+              style={styles.bottomButton}
+              onPress={() => setSelectedPage('home')}>
               <Icon name="monitor-dashboard" size={28} color="#888" />
               <Text style={styles.buttonLabel}>Monitor</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.bottomButton} onPress={() => setSelectedPage('notifications')}>
+            <TouchableOpacity
+              style={styles.bottomButton}
+              onPress={() => setSelectedPage('notifications')}>
               <Icon name="bell-outline" size={28} color="#888" />
               <Text style={styles.buttonLabel}>Notifications</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.bottomButton} onPress={() => setSelectedPage('calculator')}>
-              <Icon name="calculator-variant-outline" size={28} color="#007AFF" />
+            <TouchableOpacity
+              style={styles.bottomButton}
+              onPress={() => setSelectedPage('calculator')}>
+              <Icon
+                name="calculator-variant-outline"
+                size={28}
+                color="#007AFF"
+              />
               <Text style={styles.buttonLabel}>WQI Calculator</Text>
             </TouchableOpacity>
           </View>
@@ -65,22 +83,29 @@ const App = () => {
         <NotificationScreen />
         <View style={styles.bottomBar}>
           <View style={styles.buttonRow}>
-            <TouchableOpacity style={styles.bottomButton} onPress={() => setSelectedPage('home')}>
+            <TouchableOpacity
+              style={styles.bottomButton}
+              onPress={() => setSelectedPage('home')}>
               <Icon name="monitor-dashboard" size={30} color="#888" />
               <Text style={styles.buttonLabel}>Monitor</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.bottomButton} onPress={() => setSelectedPage('notifications')}>
+            <TouchableOpacity
+              style={styles.bottomButton}
+              onPress={() => setSelectedPage('notifications')}>
               <Icon name="bell-outline" size={30} color="#007AFF" />
               <Text style={styles.buttonLabel}>Notifications</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.bottomButton} onPress={() => setSelectedPage('calculator')}>
+            <TouchableOpacity
+              style={styles.bottomButton}
+              onPress={() => setSelectedPage('calculator')}>
               <Icon name="calculator-variant-outline" size={30} color="#888" />
               <Text style={styles.buttonLabel}>WQI Calculator</Text>
             </TouchableOpacity>
           </View>
         </View>
       </>
-    );` `
+    );
+    ` `;
   }
 };
 
@@ -106,7 +131,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
+    shadowOffset: {width: 0, height: -2},
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 10,

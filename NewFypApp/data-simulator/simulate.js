@@ -1,23 +1,10 @@
-const csv = require("csv-parser");
-const { initializeApp } = require("firebase/app");
-const { getAuth, signInAnonymously } = require("firebase/auth");
-const { addDoc, collection, getFirestore, serverTimestamp } = require("firebase/firestore");
-const fs = require("fs");
+import csv from "csv-parser";
+import { signInAnonymously } from "firebase/auth";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import fs from "fs";
+import { auth, db } from "../FirebaseConfig.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDHoLe1uuk1EwrnrIIT8mt2WSrnpKh9M6E",
-  authDomain: "aquasense-e2362.firebaseapp.com",
-  projectId: "aquasense-e2362",
-  storageBucket: "aquasense-e2362.firebasestorage.app",
-  messagingSenderId: "944762180545",
-  appId: "1:944762180545:web:16f47ac3cd0f6872ea9540"
-};
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-
-// --- Sign in first ---
 signInAnonymously(auth)
   .then(() => {
     console.log("✅ Signed in anonymously, starting simulation...");

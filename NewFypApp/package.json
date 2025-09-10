@@ -2,6 +2,7 @@
   "name": "NewFypApp",
   "version": "0.0.1",
   "private": true,
+  "type": "commonjs",
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios",
@@ -10,8 +11,16 @@
     "test": "jest"
   },
   "dependencies": {
+    "@notifee/react-native": "^9.1.8",
+    "@react-native-firebase/app": "^23.3.1",
+    "@react-native-firebase/firestore": "^23.3.1",
+    "csv-parser": "^3.2.0",
+    "firebase": "^12.2.1",
     "react": "18.2.0",
     "react-native": "0.74.5",
+    "react-native-linear-gradient": "^2.8.3",
+    "react-native-safe-area-context": "^5.6.1",
+    "react-native-svg": "^14.1.0",
     "react-native-vector-icons": "^10.3.0"
   },
   "devDependencies": {
@@ -22,7 +31,9 @@
     "@react-native/eslint-config": "0.74.87",
     "@react-native/metro-config": "0.74.87",
     "@react-native/typescript-config": "0.74.87",
+    "@types/firebase": "^2.4.32",
     "@types/react": "^18.2.6",
+    "@types/react-native-vector-icons": "^6.4.18",
     "@types/react-test-renderer": "^18.0.0",
     "babel-jest": "^29.6.3",
     "eslint": "^8.19.0",

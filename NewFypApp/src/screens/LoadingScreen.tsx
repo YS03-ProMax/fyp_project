@@ -27,7 +27,7 @@ const LoadingScreen: React.FC<Props> = ({ onFinish }) => {
     <View style={styles.container}>
       {/* 👇 Replace with your actual logo when ready */}
       <Image
-        source={require('../WhiteBgLogo.png')}
+        source={require('../utils/WhiteBgLogo.png')}
         style={styles.logo}
         resizeMode="contain"
       />
