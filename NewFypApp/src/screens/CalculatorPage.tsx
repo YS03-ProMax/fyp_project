@@ -24,13 +24,14 @@ import {
   default as Icon,
   default as Ionicons,
 } from 'react-native-vector-icons/Ionicons';
-import { db } from '../../FirebaseConfig';
 import {
   calcDOsatPercent,
   calculateWQI,
   classifyWQI,
   getWqiStatus
 } from '../services/wqi';
+
+const { db } = require("../../FirebaseConfig");
 
 const CalculatorPage: React.FC = () => {
   const [parameters, setParameters] = useState({

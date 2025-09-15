@@ -2,7 +2,6 @@
   "name": "NewFypApp",
   "version": "0.0.1",
   "private": true,
-  "type": "commonjs",
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios",
@@ -12,12 +11,14 @@
   },
   "dependencies": {
     "@notifee/react-native": "^9.1.8",
+    "@react-native-async-storage/async-storage": "^1.24.0",
     "@react-native-firebase/app": "^23.3.1",
     "@react-native-firebase/firestore": "^23.3.1",
     "csv-parser": "^3.2.0",
     "firebase": "^12.2.1",
+    "maps": "^0.3.3",
     "react": "18.2.0",
-    "react-native": "0.74.5",
+    "react-native": "^0.74.5",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-safe-area-context": "^5.6.1",
     "react-native-svg": "^14.1.0",

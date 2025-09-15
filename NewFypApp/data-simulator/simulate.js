@@ -1,10 +1,17 @@
-import csv from "csv-parser";
-import { signInAnonymously } from "firebase/auth";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import fs from "fs";
-import { auth, db } from "../FirebaseConfig.js";
+// simulate.js (CommonJS version)
 
+// Dependencies
+const csv = require("csv-parser");
+const fs = require("fs");
 
+// Firebase imports (CommonJS way)
+const { signInAnonymously } = require("firebase/auth");
+const { addDoc, collection, serverTimestamp } = require("firebase/firestore");
+
+// Import your Firebase config
+const { auth, db } = require("../FirebaseConfig.js");
+
+// --- Start Anonymous Auth ---
 signInAnonymously(auth)
   .then(() => {
     console.log("✅ Signed in anonymously, starting simulation...");
@@ -14,6 +21,7 @@ signInAnonymously(auth)
     console.error("❌ Auth error:", error);
   });
 
+// --- Simulation Logic ---
 function startSimulation() {
   let rows = [];
   fs.createReadStream("klangRiver.csv")
@@ -48,10 +56,10 @@ function simulateUpload(rows) {
         console.log(`Uploaded row ${index + 1}:`, parsedRow);
         index++;
       } catch (error) {
-        console.error("Error uploading:", error);
+        console.error("❌ Error uploading:", error);
       }
     } else {
-      console.log("Simulation complete!");
+      console.log("✅ Simulation complete!");
       process.exit();
     }
   }, 5000);

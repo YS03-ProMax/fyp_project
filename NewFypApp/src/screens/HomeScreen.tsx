@@ -1,29 +1,29 @@
 import {
+  addDoc,
   collection,
+  getDocs,
   limit,
   onSnapshot,
   orderBy,
   query,
-  addDoc,
   serverTimestamp,
   where,
-  getDocs,
 } from 'firebase/firestore';
-import React, {useEffect, useState} from 'react';
-import axios from 'axios';
+import React, { useEffect, useState } from 'react';
 import {
-  Image,
   Dimensions,
   Modal,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
-import {db} from '../../FirebaseConfig.js';
-import {showWaterQualityAlert} from '../services/NotificationService';
-import Svg, {Circle} from 'react-native-svg';
+import Svg, { Circle } from 'react-native-svg';
+import { showWaterQualityAlert } from '../services/NotificationService';
+
+const { db } = require("../../FirebaseConfig");
+
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 

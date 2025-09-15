@@ -1,7 +1,6 @@
-// FirebaseConfig.js
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+const { initializeApp } = require("firebase/app");
+const { getFirestore } = require("firebase/firestore");
+const { getAuth } = require("firebase/auth"); // 👈 use plain getAuth in Node
 
 const firebaseConfig = {
   apiKey: "AIzaSyDHoLe1uuk1EwrnrIIT8mt2WSrnpKh9M6E",
@@ -14,5 +13,9 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-export const db = getFirestore(app);
-export const auth = getAuth(app);   // 👈 add this
+// Node.js → just getAuth
+const auth = getAuth(app);
+
+const db = getFirestore(app);
+
+module.exports = { db, auth };

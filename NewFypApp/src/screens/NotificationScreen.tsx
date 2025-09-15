@@ -1,7 +1,8 @@
 import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { FlatList, ImageBackground, StyleSheet, Text, View } from 'react-native';
-import { db } from '../../FirebaseConfig';
+
+const { db } = require("../../FirebaseConfig");
 
 interface AlertItem {
   id: string;
