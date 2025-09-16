@@ -1,15 +1,17 @@
 import {
   addDoc,
   collection,
+  doc,
   getDocs,
   limit,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
+  updateDoc,
   where,
 } from 'firebase/firestore';
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   Dimensions,
   Modal,
@@ -17,15 +19,13 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
-import { showWaterQualityAlert } from '../services/NotificationService';
+import Svg, {Circle} from 'react-native-svg';
+import {showWaterQualityAlert} from '../services/NotificationService';
 
-const { auth, db } = require("../../FirebaseConfig");
-const { signInAnonymously } = require("firebase/auth");
-
-
+const {auth, db} = require('../../FirebaseConfig');
+const {signInAnonymously} = require('firebase/auth');
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -48,6 +48,7 @@ type SensorData = {
   pH?: number;
   NH3N?: number;
   TEMP?: number;
+  id?: string;
 };
 
 export interface AlertItem {
@@ -60,7 +61,7 @@ export interface AlertItem {
   param: string;
   value: number;
   status: string;
-  params: Record<string, { value: number | null; status: string }>;
+  params: Record<string, {value: number | null; status: string}>;
   createdAt?: any;
 }
 
@@ -77,7 +78,7 @@ const saveAlertToFirestore = async (
   latestData: SensorData,
   modalAlert: {param: string; value: number; status: string},
   prediction?: string,
-  confidence?: string
+  confidence?: string,
 ) => {
   try {
     const alertsRef = collection(db, 'alerts');
@@ -94,13 +95,13 @@ const saveAlertToFirestore = async (
     }
 
     // Build params object with value and status for each parameter
-    const params: Record<string, { value: number | null; status: string }> = {};
+    const params: Record<string, {value: number | null; status: string}> = {};
     PARAMS.forEach(param => {
       const value = latestData[param.key as keyof SensorData] ?? null;
-      const { status } =
+      const {status} =
         typeof value === 'number'
           ? getParamStatusAndColor(param.key, value)
-          : { status: '-' };
+          : {status: '-'};
       params[param.key] = {
         value: typeof value === 'number' ? value : null,
         status,
@@ -218,12 +219,12 @@ const HomeScreen = () => {
 
   const [selectedAlert, setSelectedAlert] = useState<AlertItem | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  
+
   useEffect(() => {
-  signInAnonymously(auth)
-    .then((): void => console.log("✅ Signed in anonymously for alerts"))
-    .catch((err: Error): void => console.error("❌ Auth error:", err));
-}, []);
+    signInAnonymously(auth)
+      .then((): void => console.log('✅ Signed in anonymously for alerts'))
+      .catch((err: Error): void => console.error('❌ Auth error:', err));
+  }, []);
 
   // 🔹 Add prediction states here
   const [prediction, setPrediction] = useState<string | null>(null);
@@ -244,7 +245,7 @@ const HomeScreen = () => {
     const unsubscribe = onSnapshot(q, snapshot => {
       snapshot.forEach(doc => {
         const data = doc.data() as SensorData;
-        setLatestData(data);
+        setLatestData({...data, id: doc.id});
 
         // check alerts
         PARAMS.forEach(param => {
@@ -289,10 +290,19 @@ const HomeScreen = () => {
         console.log('🔹 Prediction API response:', data);
         setPrediction(data.prediction);
         setConfidence(data.confidence);
+
+        // Save prediction and confidence to sensorData
+        if (latestData && latestData.id) {
+          const sensorDocRef = doc(db, 'sensorData', latestData.id);
+          updateDoc(sensorDocRef, {
+            predictedStatus: data.prediction ?? null,
+            confidenceScore: data.confidence ?? null,
+            probabilities: data.probabilities ?? null,
+          });
+        }
       })
       .catch(err => console.error('❌ Prediction fetch error:', err));
-  }, [latestData]); // refetch when new sensor data comes in
-
+  }, [latestData]);
   // refetch when new sensor data comes in
 
   return (
@@ -326,7 +336,12 @@ const HomeScreen = () => {
               onPress={() => {
                 if (modalAlert && latestData) {
                   dismissAlert(modalAlert.param);
-                  saveAlertToFirestore(latestData, modalAlert); // ✅ save on dismiss
+                  saveAlertToFirestore(
+                    latestData,
+                    modalAlert,
+                    prediction ?? undefined,
+                    confidence ?? undefined,
+                  );
                 }
                 setModalAlert(null);
               }}
@@ -361,11 +376,16 @@ const HomeScreen = () => {
           {/* 🔹 Prediction Card inside HomeScreen */}
           <View style={styles.predictionCard}>
             <View style={styles.predictionRow}>
-              <View style={{flex: .9}}>
+              <View style={{flex: 0.9}}>
                 <Text
                   style={[
                     styles.predictionTitle,
-                    {textAlign: 'left', fontSize: 20, marginBottom: 4, marginLeft: 4},
+                    {
+                      textAlign: 'left',
+                      fontSize: 20,
+                      marginBottom: 4,
+                      marginLeft: 4,
+                    },
                   ]}>
                   Predicted River Status
                 </Text>
@@ -378,7 +398,7 @@ const HomeScreen = () => {
                       paddingVertical: 6,
                       alignSelf: 'flex-start',
                       marginTop: 4,
-                      marginLeft: 4
+                      marginLeft: 4,
                     },
                     prediction === 'Clean'
                       ? {backgroundColor: '#4CAF50'}
@@ -509,12 +529,12 @@ const HomeScreen = () => {
 
 const styles = StyleSheet.create({
   predictionRow: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  width: '100%',
-  justifyContent: 'flex-start', // or 'center'
-  marginBottom: 2,
-},
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    justifyContent: 'flex-start', // or 'center'
+    marginBottom: 2,
+  },
   grid: {
     width: '100%',
     flexDirection: 'row',

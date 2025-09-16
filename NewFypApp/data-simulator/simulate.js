@@ -1,6 +1,3 @@
-// simulate.js (CommonJS version)
-
-// Dependencies
 const csv = require("csv-parser");
 const fs = require("fs");
 

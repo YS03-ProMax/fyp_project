@@ -8,7 +8,7 @@ import {
   orderBy,
   query,
 } from 'firebase/firestore';
-import React, { useEffect, useRef, useState } from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   Alert,
   Animated,
@@ -28,10 +28,10 @@ import {
   calcDOsatPercent,
   calculateWQI,
   classifyWQI,
-  getWqiStatus
+  getWqiStatus,
 } from '../services/wqi';
 
-const { db } = require("../../FirebaseConfig");
+const {db} = require('../../FirebaseConfig');
 
 const CalculatorPage: React.FC = () => {
   const [parameters, setParameters] = useState({
@@ -75,6 +75,7 @@ const CalculatorPage: React.FC = () => {
   };
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validateInputs = () => {
     const ranges: Record<keyof typeof parameters, [number, number]> = {
@@ -87,33 +88,30 @@ const CalculatorPage: React.FC = () => {
       SS: [0, 1000],
       temp: [0, 50],
     };
+    const newErrors: Record<string, string> = {};
     for (const [key, val] of Object.entries(parameters)) {
-      // Only validate the selected DO type
       if (
         (key === 'DO' && doType === 'DO_Sat') ||
         (key === 'DO_Sat' && doType === 'DO')
       )
         continue;
-      // Only require temperature if DO is selected
       if (key === 'temp' && doType !== 'DO') continue;
-      if (val.trim() === '' || isNaN(Number(val))) {
-        Alert.alert(
-          'Invalid Input',
-          `Please enter a valid number for ${key.toUpperCase()}.`,
-        );
-        return false;
+      if (val.trim() === '') {
+        newErrors[key] = 'This field cannot be empty';
+        continue;
+      }
+      if (isNaN(Number(val))) {
+        newErrors[key] = 'Please enter a valid number';
+        continue;
       }
       const num = Number(val);
       const [min, max] = ranges[key as keyof typeof parameters];
       if (num < min || num > max) {
-        Alert.alert(
-          'Out of Range',
-          `${key.toUpperCase()} must be between ${min} and ${max} for DOE WQI calculation.`,
-        );
-        return false;
+        newErrors[key] = `Must be between ${min} and ${max}`;
       }
     }
-    return true;
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleCalculate = () => {
@@ -155,18 +153,32 @@ const CalculatorPage: React.FC = () => {
   };
 
   const renderInput = (label: string, key: keyof typeof parameters) => (
-    <View style={styles.inputGroup} key={key}>
-      <Text style={styles.inputLabel}>{label}</Text>
-      <TextInput
-        style={styles.inputBox}
-        value={parameters[key]}
-        onChangeText={text => handleChange(key, text)}
-        keyboardType="numeric"
-        placeholder="Enter value"
-        placeholderTextColor="#a0c4d6"
-      />
-    </View>
-  );
+  <View style={styles.inputGroup} key={key}>
+    <Text style={styles.inputLabel}>{label}</Text>
+    <TextInput
+      style={[
+        styles.inputBox,
+        errors[key]
+          ? {borderColor: '#ff3b30', fontWeight: 'bold'}
+          : {fontWeight: 'bold'},
+      ]}
+      value={parameters[key]}
+      onChangeText={text => {
+        handleChange(key, text);
+        setErrors(prev => ({...prev, [key]: ''}));
+      }}
+      keyboardType="numeric"
+      placeholder="Enter value"
+      placeholderTextColor="#a0c4d6"
+    />
+    {errors[key] && (
+      <Text style={{color: '#ff3b30', fontSize: 13, marginTop: 2}}>
+        {errors[key]}
+      </Text>
+    )}
+  </View>
+);
+
 
   type WQIRecord = {
     BOD: number;
@@ -310,7 +322,11 @@ const CalculatorPage: React.FC = () => {
                       {/* Checkbox */}
                       <View style={styles.checkbox}>
                         {selectedIds.includes(h.id) && (
-                          <Ionicons name="checkmark" size={16} color="#e20c0cff" />
+                          <Ionicons
+                            name="checkmark"
+                            size={16}
+                            color="#e20c0cff"
+                          />
                         )}
                       </View>
                       {/* History Info */}
@@ -389,18 +405,52 @@ const CalculatorPage: React.FC = () => {
                 ]}>
                 <Text style={styles.detailsTitle}>Calculation Details</Text>
                 <ScrollView style={{maxHeight: 400, marginTop: 12}}>
-                    <Text style={{fontSize: 18, fontWeight: 'bold', marginBottom: 6}}>BOD: {selectedHistory.BOD}</Text>
-                    <Text style={{fontSize: 18, fontWeight: 'bold', marginBottom: 6}}>COD: {selectedHistory.COD}</Text>
-                    <Text style={{fontSize: 18, fontWeight: 'bold', marginBottom: 6}}>NH3N: {selectedHistory.NH3N}</Text>
-                    <Text style={{fontSize: 18, fontWeight: 'bold', marginBottom: 6}}>SS: {selectedHistory.SS}</Text>
-                    <Text style={{fontSize: 18, fontWeight: 'bold', marginBottom: 6}}>DO: {selectedHistory.DO}</Text>
-                    <Text style={{fontSize: 18, fontWeight: 'bold', marginBottom: 6}}>DO%: {selectedHistory.DO_percent.toFixed(2)}</Text>
-                    <Text style={{fontSize: 18, fontWeight: 'bold', marginBottom: 6}}>pH: {selectedHistory.pH}</Text>
-                    <Text style={{fontSize: 18, fontWeight: 'bold', marginBottom: 6}}>Temp: {selectedHistory.Temp}</Text>
-                    <Text style={{fontSize: 18, fontWeight: 'bold', marginBottom: 6}}>WQI: {selectedHistory.WQI.toFixed(2)}</Text>
-                    <Text style={{fontSize: 18, fontWeight: 'bold', marginBottom: 6}}>Class: {selectedHistory.Class}</Text>
-                    <Text style={{fontSize: 18, fontWeight: 'bold', marginBottom: 6}}>Status: {selectedHistory.Status}</Text>
-                  <Text style={{fontSize: 18, fontWeight: 'bold', marginBottom: 6}}>
+                  <Text
+                    style={{fontSize: 18, fontWeight: 'bold', marginBottom: 6}}>
+                    BOD: {selectedHistory.BOD}
+                  </Text>
+                  <Text
+                    style={{fontSize: 18, fontWeight: 'bold', marginBottom: 6}}>
+                    COD: {selectedHistory.COD}
+                  </Text>
+                  <Text
+                    style={{fontSize: 18, fontWeight: 'bold', marginBottom: 6}}>
+                    NH3N: {selectedHistory.NH3N}
+                  </Text>
+                  <Text
+                    style={{fontSize: 18, fontWeight: 'bold', marginBottom: 6}}>
+                    SS: {selectedHistory.SS}
+                  </Text>
+                  <Text
+                    style={{fontSize: 18, fontWeight: 'bold', marginBottom: 6}}>
+                    DO: {selectedHistory.DO}
+                  </Text>
+                  <Text
+                    style={{fontSize: 18, fontWeight: 'bold', marginBottom: 6}}>
+                    DO%: {selectedHistory.DO_percent.toFixed(2)}
+                  </Text>
+                  <Text
+                    style={{fontSize: 18, fontWeight: 'bold', marginBottom: 6}}>
+                    pH: {selectedHistory.pH}
+                  </Text>
+                  <Text
+                    style={{fontSize: 18, fontWeight: 'bold', marginBottom: 6}}>
+                    Temp: {selectedHistory.Temp}
+                  </Text>
+                  <Text
+                    style={{fontSize: 18, fontWeight: 'bold', marginBottom: 6}}>
+                    WQI: {selectedHistory.WQI.toFixed(2)}
+                  </Text>
+                  <Text
+                    style={{fontSize: 18, fontWeight: 'bold', marginBottom: 6}}>
+                    Class: {selectedHistory.Class}
+                  </Text>
+                  <Text
+                    style={{fontSize: 18, fontWeight: 'bold', marginBottom: 6}}>
+                    Status: {selectedHistory.Status}
+                  </Text>
+                  <Text
+                    style={{fontSize: 18, fontWeight: 'bold', marginBottom: 6}}>
                     Timestamp:{' '}
                     {new Date(
                       selectedHistory.timestamp.seconds * 1000,
@@ -529,15 +579,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#e6f0ff',
   },
   checkbox: {
-  width: 22,
-  height: 22,
-  borderWidth: 2,
-  borderColor: '#007AFF',
-  borderRadius: 4,
-  marginRight: 12,
-  justifyContent: 'center',
-  alignItems: 'center',
-},
+    width: 22,
+    height: 22,
+    borderWidth: 2,
+    borderColor: '#007AFF',
+    borderRadius: 4,
+    marginRight: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   checkboxSelected: {
     backgroundColor: '#007bff',
   },

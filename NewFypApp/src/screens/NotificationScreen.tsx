@@ -1,7 +1,15 @@
 import {collection, onSnapshot, orderBy, query} from 'firebase/firestore';
 import React, {useEffect, useState} from 'react';
-import {FlatList, ImageBackground, StyleSheet, Text, View} from 'react-native';
-import {Modal, TouchableOpacity, ScrollView} from 'react-native';
+import {
+  FlatList,
+  ImageBackground,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 const {db} = require('../../FirebaseConfig');
 
@@ -121,43 +129,35 @@ export default function NotificationsScreen() {
 
       {/* Tab Content Rendering */}
       {activeTab === 'alerts' ? (
-        alerts.length === 0 ? (
-          <Text style={styles.noAlertsText}>No alerts at the moment</Text>
-        ) : (
-          <FlatList
-            data={alerts}
-            keyExtractor={item => item.id}
-            renderItem={({item}) => (
-              <TouchableOpacity
-                onPress={() => {
-                  setSelectedAlert(item);
-                  setModalVisible(true);
-                }}>
-                <View style={styles.card}>
-                  <Text style={styles.title}>
-                    Location: {item.location || 'Unknown Location'}
-                  </Text>
-                  <Text style={styles.subtitleSmall}>
-                    Date: {item.date} | Time: {item.time}
-                  </Text>
-                  <Text
-                    style={{
-                      color: '#f12424', // red
-                      fontWeight: 'bold',
-                      fontSize: 18,
-                      marginBottom: 6,
-                    }}>
-                    Parameter: {item.param} | Value: {item.value}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            )}
-          />
-        )
-      ) : sensorDataItems.length === 0 ? (
-        <Text style={styles.noAlertsText}>
-          No water quality data at the moment
-        </Text>
+        <FlatList
+          data={alerts}
+          keyExtractor={item => item.id}
+          renderItem={({item}) => (
+            <TouchableOpacity
+              onPress={() => {
+                setSelectedAlert(item);
+                setModalVisible(true);
+              }}>
+              <View style={styles.card}>
+                <Text style={styles.title}>
+                  Location: {item.location || 'Unknown Location'}
+                </Text>
+                <Text style={styles.subtitleSmall}>
+                  Date: {item.date} | Time: {item.time}
+                </Text>
+                <Text
+                  style={{
+                    color: '#f12424', // red for alerts only
+                    fontWeight: 'bold',
+                    fontSize: 18,
+                    marginBottom: 6,
+                  }}>
+                  Parameter: {item.param} | Value: {item.value}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
       ) : (
         <FlatList
           data={sensorDataItems}
@@ -165,7 +165,7 @@ export default function NotificationsScreen() {
           renderItem={({item}) => (
             <TouchableOpacity
               onPress={() => {
-                setSelectedAlert(item); // reuse modal for details
+                setSelectedAlert(item);
                 setModalVisible(true);
               }}>
               <View style={styles.card}>
@@ -175,7 +175,8 @@ export default function NotificationsScreen() {
                 <Text style={styles.subtitleSmall}>
                   Date: {item['SMP-DAT']} | Time: {item.Time}
                 </Text>
-                {/* Add more summary fields as needed */}
+                {/* Parameter line for normal data is NOT red */}
+                {/* You can add more summary fields here if needed */}
               </View>
             </TouchableOpacity>
           )}
@@ -211,58 +212,72 @@ export default function NotificationsScreen() {
                   marginBottom: 8,
                   color: '#000',
                 }}>
-                Alert Details
+                Water Quality Status Details
               </Text>
               {selectedAlert && (
                 <View>
-                  <Text style={{color: '#000'}}>
-                    Location: {selectedAlert.location}
+                  <Text style={{color: '#000', fontWeight: 'bold'}}>
+                    Location:{' '}
+                    {selectedAlert.location || selectedAlert.LOCATION || '-'}
                   </Text>
-                  <Text style={{color: '#000'}}>
-                    Station ID: {selectedAlert.stationId}
+                  <Text style={{color: '#000', fontWeight: 'bold'}}>
+                    Station ID:{' '}
+                    {selectedAlert.stationId ||
+                      selectedAlert[' ID STN (2016)'] ||
+                      '-'}
                   </Text>
-                  <Text style={{color: '#000'}}>
-                    New Station ID: {selectedAlert.newStationId}
+                  <Text style={{color: '#000', fontWeight: 'bold'}}>
+                    New Station ID:{' '}
+                    {selectedAlert.newStationId ||
+                      selectedAlert['ID STN BARU'] ||
+                      '-'}
                   </Text>
-                  <Text style={{color: '#000'}}>
-                    Date: {selectedAlert.date}
+                  <Text style={{color: '#000', fontWeight: 'bold'}}>
+                    Date:{' '}
+                    {selectedAlert.date || selectedAlert['SMP-DAT'] || '-'}
                   </Text>
-                  <Text style={{color: '#000'}}>
-                    Time: {selectedAlert.time}
+                  <Text style={{color: '#000', fontWeight: 'bold'}}>
+                    Time: {selectedAlert.time || selectedAlert.Time || '-'}
                   </Text>
-                  <Text style={{color: '#000'}}>
-                    Parameter: {selectedAlert.param}
-                  </Text>
-                  <Text style={{color: '#000'}}>
-                    Value: {selectedAlert.value}
-                  </Text>
-                  <Text style={{color: '#000'}}>
-                    Status: {selectedAlert.status}
+                  <Text style={{color: '#000', fontWeight: 'bold'}}>
+                    Predicted River Quality Status:{' '}
+                    {selectedAlert.predictedStatus ||
+                      selectedAlert.prediction ||
+                      selectedAlert['RIVER STATUS'] ||
+                      '-'}
                   </Text>
                   <Text
-                    style={{
-                      marginTop: 12,
-                      fontWeight: 'bold',
-                      color: '#000',
-                    }}>
+                    style={{marginTop: 12, fontWeight: 'bold', color: '#000'}}>
                     All Parameters:
                   </Text>
-                  {selectedAlert.params &&
-                    Object.entries(selectedAlert.params).map(
-                      ([key, {value, status}]) => (
-                        <Text
-                          key={key}
-                          style={{
-                            color:
-                              status === '(Very Poor)' ? '#f12424' : '#000', // red for Very Poor, black otherwise
-                            fontWeight:
-                              status === '(Very Poor)' ? 'bold' : 'normal',
-                            marginBottom: 2,
-                          }}>
-                          {key}: {value} {status}
-                        </Text>
-                      ),
-                    )}
+                  {selectedAlert.params
+                    ? Object.entries(selectedAlert.params).map(
+                        ([key, {value, status}]) => (
+                          <Text
+                            key={key}
+                            style={{
+                              color:
+                                status === '(Very Poor)' ? '#f12424' : '#000',
+                              fontWeight: 'bold',
+                              marginBottom: 2,
+                            }}>
+                            {key}: {value} {status}
+                          </Text>
+                        ),
+                      )
+                    : Object.entries(selectedAlert)
+                        .filter(([key, val]) => typeof val === 'number')
+                        .map(([key, val]) => (
+                          <Text
+                            key={key}
+                            style={{
+                              color: '#000',
+                              fontWeight: 'bold',
+                              marginBottom: 2,
+                            }}>
+                            {key}: {val}
+                          </Text>
+                        ))}
                 </View>
               )}
               <TouchableOpacity
