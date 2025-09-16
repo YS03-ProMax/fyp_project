@@ -22,7 +22,9 @@ import {
 import Svg, { Circle } from 'react-native-svg';
 import { showWaterQualityAlert } from '../services/NotificationService';
 
-const { db } = require("../../FirebaseConfig");
+const { auth, db } = require("../../FirebaseConfig");
+const { signInAnonymously } = require("firebase/auth");
+
 
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -48,6 +50,20 @@ type SensorData = {
   TEMP?: number;
 };
 
+export interface AlertItem {
+  id: string;
+  stationId: string;
+  newStationId: string;
+  location: string;
+  date: string;
+  time: string;
+  param: string;
+  value: number;
+  status: string;
+  params: Record<string, { value: number | null; status: string }>;
+  createdAt?: any;
+}
+
 const PARAMS = [
   {key: 'pH', label: 'pH', min: 0, max: 14},
   {key: 'DO', label: 'DO', min: 0, max: 15},
@@ -60,9 +76,10 @@ const PARAMS = [
 const saveAlertToFirestore = async (
   latestData: SensorData,
   modalAlert: {param: string; value: number; status: string},
+  prediction?: string,
+  confidence?: string
 ) => {
   try {
-    // Check for existing alert
     const alertsRef = collection(db, 'alerts');
     const q = query(
       alertsRef,
@@ -76,6 +93,20 @@ const saveAlertToFirestore = async (
       return;
     }
 
+    // Build params object with value and status for each parameter
+    const params: Record<string, { value: number | null; status: string }> = {};
+    PARAMS.forEach(param => {
+      const value = latestData[param.key as keyof SensorData] ?? null;
+      const { status } =
+        typeof value === 'number'
+          ? getParamStatusAndColor(param.key, value)
+          : { status: '-' };
+      params[param.key] = {
+        value: typeof value === 'number' ? value : null,
+        status,
+      };
+    });
+
     await addDoc(alertsRef, {
       stationId: latestData[' ID STN (2016)'] ?? '-',
       newStationId: latestData['ID STN BARU'] ?? '-',
@@ -85,6 +116,9 @@ const saveAlertToFirestore = async (
       param: modalAlert.param,
       value: modalAlert.value,
       status: modalAlert.status,
+      params,
+      prediction: prediction ?? null,
+      confidence: confidence ?? null,
       createdAt: serverTimestamp(),
     });
     console.log('✅ Alert saved to Firestore');
@@ -181,6 +215,15 @@ const HomeScreen = () => {
     value: number;
     status: string;
   } | null>(null);
+
+  const [selectedAlert, setSelectedAlert] = useState<AlertItem | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  
+  useEffect(() => {
+  signInAnonymously(auth)
+    .then((): void => console.log("✅ Signed in anonymously for alerts"))
+    .catch((err: Error): void => console.error("❌ Auth error:", err));
+}, []);
 
   // 🔹 Add prediction states here
   const [prediction, setPrediction] = useState<string | null>(null);

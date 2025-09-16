@@ -11,7 +11,7 @@ const LoadingScreen: React.FC<Props> = ({ onFinish }) => {
   useEffect(() => {
     Animated.timing(progress, {
       toValue: 1,
-      duration: 3000,
+      duration: 5000,
       useNativeDriver: false,
     }).start(() => {
       onFinish();
@@ -31,7 +31,6 @@ const LoadingScreen: React.FC<Props> = ({ onFinish }) => {
         style={styles.logo}
         resizeMode="contain"
       />
-      <Text style={styles.appName}>AquaSense</Text>
 
       {/* Loading bar */}
       <View style={styles.barContainer}>

@@ -1,8 +1,9 @@
-import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
-import React, { useEffect, useState } from 'react';
-import { FlatList, ImageBackground, StyleSheet, Text, View } from 'react-native';
+import {collection, onSnapshot, orderBy, query} from 'firebase/firestore';
+import React, {useEffect, useState} from 'react';
+import {FlatList, ImageBackground, StyleSheet, Text, View} from 'react-native';
+import {Modal, TouchableOpacity, ScrollView} from 'react-native';
 
-const { db } = require("../../FirebaseConfig");
+const {db} = require('../../FirebaseConfig');
 
 interface AlertItem {
   id: string;
@@ -14,11 +15,16 @@ interface AlertItem {
   param: string;
   value: number;
   status: string;
-  createdAt?: any; // Firestore timestamp
+  params?: Record<string, {value: number | null; status: string}>;
+  createdAt?: any;
 }
 
 export default function NotificationsScreen() {
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
+  const [selectedAlert, setSelectedAlert] = useState<AlertItem | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [activeTab, setActiveTab] = useState<'alerts' | 'sensorData'>('alerts');
+  const [sensorDataItems, setSensorDataItems] = useState<any[]>([]);
 
   useEffect(() => {
     const q = query(
@@ -37,48 +43,244 @@ export default function NotificationsScreen() {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    const q = query(collection(db, 'sensorData'), orderBy('timestamp', 'desc'));
+    const unsubscribe = onSnapshot(q, snapshot => {
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setSensorDataItems(data);
+    });
+    return () => unsubscribe();
+  }, []);
+
   return (
     <ImageBackground
       source={require('../utils/heartpatrick_kuala_lumpur_river_of_life_masjid_jamek03.jpg')}
       style={styles.background}
       resizeMode="cover">
-      <View style={styles.overlay}>
-        {alerts.length === 0 ? (
+      {/* Top Bar */}
+      <View
+        style={{
+          flexDirection: 'row',
+          marginBottom: 16,
+          marginTop: 12,
+          marginHorizontal: 8,
+          backgroundColor: '#fff', // white background
+          borderRadius: 8,
+        }}>
+        {/* Water Quality Data (left) */}
+        <TouchableOpacity
+          style={{
+            flex: 1,
+            paddingVertical: 14,
+            alignItems: 'center',
+            borderBottomWidth: activeTab === 'sensorData' ? 3 : 1,
+            borderBottomColor:
+              activeTab === 'sensorData' ? '#3f7fe0' : '#e0e0e0',
+            backgroundColor: activeTab === 'sensorData' ? '#eaf2ff' : '#fff', // blue shade when selected
+            borderTopLeftRadius: 8,
+            borderBottomLeftRadius: 8,
+          }}
+          onPress={() => setActiveTab('sensorData')}>
+          <Text
+            style={{
+              color: activeTab === 'sensorData' ? '#3f7fe0' : '#222',
+              fontWeight: 'bold',
+              fontSize: 16,
+              letterSpacing: 1,
+            }}>
+            Water Quality Data
+          </Text>
+        </TouchableOpacity>
+        {/* Alerts (right) */}
+        <TouchableOpacity
+          style={{
+            flex: 1,
+            paddingVertical: 14,
+            alignItems: 'center',
+            borderBottomWidth: activeTab === 'alerts' ? 3 : 1,
+            borderBottomColor: activeTab === 'alerts' ? '#3f7fe0' : '#e0e0e0',
+            backgroundColor: activeTab === 'alerts' ? '#eaf2ff' : '#fff', // blue shade when selected
+            borderTopRightRadius: 8,
+            borderBottomRightRadius: 8,
+          }}
+          onPress={() => setActiveTab('alerts')}>
+          <Text
+            style={{
+              color: activeTab === 'alerts' ? '#3f7fe0' : '#222',
+              fontWeight: 'bold',
+              fontSize: 16,
+              letterSpacing: 1,
+            }}>
+            Alerts
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Tab Content Rendering */}
+      {activeTab === 'alerts' ? (
+        alerts.length === 0 ? (
           <Text style={styles.noAlertsText}>No alerts at the moment</Text>
         ) : (
           <FlatList
             data={alerts}
             keyExtractor={item => item.id}
-            renderItem={({item}) => {
-              // Convert Firestore Timestamp -> JS Date -> local time string
-              const createdAt = (item as any).createdAt?.toDate?.();
-              const localTime = createdAt
-                ? createdAt.toLocaleString()
-                : item.time || '—';
-
-              return (
+            renderItem={({item}) => (
+              <TouchableOpacity
+                onPress={() => {
+                  setSelectedAlert(item);
+                  setModalVisible(true);
+                }}>
                 <View style={styles.card}>
                   <Text style={styles.title}>
                     Location: {item.location || 'Unknown Location'}
                   </Text>
-                  <Text style={styles.subtitle}>
-                    Station ID: {item.stationId}
-                  </Text>
-                  <Text style={styles.subtitle}>
-                    New Station ID: {item.newStationId}
-                  </Text>
-                  <Text style={styles.subtitle}>
-                    {item.param}: {item.value} ({item.status})
-                  </Text>
                   <Text style={styles.subtitleSmall}>
                     Date: {item.date} | Time: {item.time}
                   </Text>
+                  <Text
+                    style={{
+                      color: '#f12424', // red
+                      fontWeight: 'bold',
+                      fontSize: 18,
+                      marginBottom: 6,
+                    }}>
+                    Parameter: {item.param} | Value: {item.value}
+                  </Text>
                 </View>
-              );
-            }}
+              </TouchableOpacity>
+            )}
           />
-        )}
-      </View>
+        )
+      ) : sensorDataItems.length === 0 ? (
+        <Text style={styles.noAlertsText}>
+          No water quality data at the moment
+        </Text>
+      ) : (
+        <FlatList
+          data={sensorDataItems}
+          keyExtractor={item => item.id}
+          renderItem={({item}) => (
+            <TouchableOpacity
+              onPress={() => {
+                setSelectedAlert(item); // reuse modal for details
+                setModalVisible(true);
+              }}>
+              <View style={styles.card}>
+                <Text style={styles.title}>
+                  Location: {item.LOCATION || 'Unknown Location'}
+                </Text>
+                <Text style={styles.subtitleSmall}>
+                  Date: {item['SMP-DAT']} | Time: {item.Time}
+                </Text>
+                {/* Add more summary fields as needed */}
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+      )}
+
+      {/* Place your modal here */}
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setModalVisible(false)}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.3)',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
+          <View
+            style={{
+              backgroundColor: '#fff',
+              borderRadius: 16,
+              padding: 24,
+              width: '90%',
+              maxHeight: '80%',
+            }}>
+            <ScrollView>
+              <Text
+                style={{
+                  fontSize: 22,
+                  fontWeight: 'bold',
+                  marginBottom: 8,
+                  color: '#000',
+                }}>
+                Alert Details
+              </Text>
+              {selectedAlert && (
+                <View>
+                  <Text style={{color: '#000'}}>
+                    Location: {selectedAlert.location}
+                  </Text>
+                  <Text style={{color: '#000'}}>
+                    Station ID: {selectedAlert.stationId}
+                  </Text>
+                  <Text style={{color: '#000'}}>
+                    New Station ID: {selectedAlert.newStationId}
+                  </Text>
+                  <Text style={{color: '#000'}}>
+                    Date: {selectedAlert.date}
+                  </Text>
+                  <Text style={{color: '#000'}}>
+                    Time: {selectedAlert.time}
+                  </Text>
+                  <Text style={{color: '#000'}}>
+                    Parameter: {selectedAlert.param}
+                  </Text>
+                  <Text style={{color: '#000'}}>
+                    Value: {selectedAlert.value}
+                  </Text>
+                  <Text style={{color: '#000'}}>
+                    Status: {selectedAlert.status}
+                  </Text>
+                  <Text
+                    style={{
+                      marginTop: 12,
+                      fontWeight: 'bold',
+                      color: '#000',
+                    }}>
+                    All Parameters:
+                  </Text>
+                  {selectedAlert.params &&
+                    Object.entries(selectedAlert.params).map(
+                      ([key, {value, status}]) => (
+                        <Text
+                          key={key}
+                          style={{
+                            color:
+                              status === '(Very Poor)' ? '#f12424' : '#000', // red for Very Poor, black otherwise
+                            fontWeight:
+                              status === '(Very Poor)' ? 'bold' : 'normal',
+                            marginBottom: 2,
+                          }}>
+                          {key}: {value} {status}
+                        </Text>
+                      ),
+                    )}
+                </View>
+              )}
+              <TouchableOpacity
+                style={{
+                  marginTop: 24,
+                  backgroundColor: '#3f7fe0ff',
+                  padding: 12,
+                  borderRadius: 8,
+                  alignItems: 'center',
+                }}
+                onPress={() => setModalVisible(false)}>
+                <Text style={{color: '#fff', fontWeight: 'bold'}}>Close</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+      {/* End modal */}
     </ImageBackground>
   );
 }
