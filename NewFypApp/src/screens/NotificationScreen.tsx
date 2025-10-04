@@ -299,7 +299,7 @@ export default function NotificationsScreen() {
     </ImageBackground>
   );
 }
-
+//styles
 const styles = StyleSheet.create({
   background: {
     flex: 1,

@@ -565,6 +565,7 @@ const CalculatorPage: React.FC = () => {
     </View>
   );
 };
+//styles
 
 const styles = StyleSheet.create({
   row: {
